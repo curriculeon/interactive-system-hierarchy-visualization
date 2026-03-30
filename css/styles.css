@@ -2,13 +2,47 @@
    INTERACTIVE SYSTEMS HIERARCHY VISUALIZATION — Styles
    ═══════════════════════════════════════════════════════════════════ */
 
+:root {
+  /* ── Backgrounds ─────────────────────────────────────────────── */
+  --color-bg:                  #0a0e1a;
+  --color-panel-bg:            rgba(10, 14, 30, 0.88);
+  --color-panel-bg-light:      rgba(10, 14, 30, 0.82);
+  --color-btn-hover-bg:        rgba(30, 45, 90, 0.5);
+
+  /* ── Text ────────────────────────────────────────────────────── */
+  --color-text:                #e0e6f0;
+  --color-text-hint:           rgba(150, 185, 255, 0.6);
+  --color-text-legend:         rgba(180, 200, 230, 0.65);
+  --color-text-title:          rgba(180, 210, 255, 0.7);
+  --color-text-subtitle:       rgba(140, 170, 220, 0.35);
+
+  /* ── Crumb states ────────────────────────────────────────────── */
+  --color-crumb-default:       rgba(150, 170, 210, 0.38);
+  --color-crumb-hover:         #8ab4ff;
+  --color-crumb-active:        #b0d0ff;
+  --color-crumb-active-glow:   rgba(120, 170, 255, 0.25);
+  --color-crumb-visited:       rgba(150, 170, 210, 0.65);
+  --color-crumb-sep:           rgba(100, 140, 255, 0.22);
+
+  /* ── Borders ─────────────────────────────────────────────────── */
+  --color-border-breadcrumb:   rgba(100, 140, 255, 0.15);
+  --color-border-hint:         rgba(100, 140, 255, 0.1);
+  --color-border-legend:       rgba(100, 140, 255, 0.08);
+  --color-border-btn:          rgba(100, 140, 255, 0.18);
+  --color-border-btn-hover:    rgba(100, 140, 255, 0.35);
+
+  /* ── Accents / Misc ──────────────────────────────────────────── */
+  --color-btn-text:            #7ba4ff;
+  --color-legend-divider:      rgba(100, 140, 255, 0.07);
+}
+
 * { margin: 0; padding: 0; box-sizing: border-box; }
 
 body {
-  background: #0a0e1a;
+  background: var(--color-bg);
   overflow: hidden;
   font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
-  color: #e0e6f0;
+  color: var(--color-text);
   user-select: none;
 }
 
@@ -24,29 +58,29 @@ canvas { display: block; }
   align-items: center;
   gap: 8px;
   padding: 10px 26px;
-  background: rgba(10, 14, 30, 0.88);
+  background: var(--color-panel-bg);
   backdrop-filter: blur(14px);
-  border: 1px solid rgba(100, 140, 255, 0.15);
+  border: 1px solid var(--color-border-breadcrumb);
   border-radius: 40px;
   font-size: 13px;
   letter-spacing: 0.4px;
   z-index: 20;
 }
 .crumb {
-  color: rgba(150, 170, 210, 0.38);
+  color: var(--color-crumb-default);
   cursor: pointer;
   transition: color 0.3s, text-shadow 0.3s;
   white-space: nowrap;
   padding: 2px 4px;
 }
-.crumb:hover { color: #8ab4ff; }
+.crumb:hover { color: var(--color-crumb-hover); }
 .crumb.active {
-  color: #b0d0ff;
+  color: var(--color-crumb-active);
   font-weight: 600;
-  text-shadow: 0 0 14px rgba(120,170,255,0.25);
+  text-shadow: 0 0 14px var(--color-crumb-active-glow);
 }
-.crumb.visited { color: rgba(150, 170, 210, 0.65); }
-.crumb-sep { color: rgba(100, 140, 255, 0.22); font-size: 10px; }
+.crumb.visited { color: var(--color-crumb-visited); }
+.crumb-sep { color: var(--color-crumb-sep); font-size: 10px; }
 
 /* ── Hint box ───────────────────────────────────────────────────── */
 #hint-box {
@@ -55,12 +89,12 @@ canvas { display: block; }
   left: 50%;
   transform: translateX(-50%);
   padding: 11px 30px;
-  background: rgba(10, 14, 30, 0.82);
+  background: var(--color-panel-bg-light);
   backdrop-filter: blur(14px);
-  border: 1px solid rgba(100, 140, 255, 0.1);
+  border: 1px solid var(--color-border-hint);
   border-radius: 30px;
   font-size: 12.5px;
-  color: rgba(150, 185, 255, 0.6);
+  color: var(--color-text-hint);
   z-index: 20;
   transition: opacity 0.6s, transform 0.6s;
   text-align: center;
@@ -74,14 +108,14 @@ canvas { display: block; }
   bottom: 34px;
   right: 28px;
   padding: 14px 18px;
-  background: rgba(10, 14, 30, 0.82);
+  background: var(--color-panel-bg-light);
   backdrop-filter: blur(14px);
-  border: 1px solid rgba(100, 140, 255, 0.08);
+  border: 1px solid var(--color-border-legend);
   border-radius: 12px;
   font-size: 10.5px;
   z-index: 20;
   line-height: 2;
-  color: rgba(180, 200, 230, 0.65);
+  color: var(--color-text-legend);
 }
 .legend-dot {
   display: inline-block;
@@ -92,7 +126,7 @@ canvas { display: block; }
 }
 .legend-div {
   height: 1px;
-  background: rgba(100,140,255,0.07);
+  background: var(--color-legend-divider);
   margin: 4px 0;
 }
 
@@ -102,11 +136,11 @@ canvas { display: block; }
   top: 20px;
   left: 22px;
   padding: 7px 16px 7px 12px;
-  background: rgba(10, 14, 30, 0.88);
+  background: var(--color-panel-bg);
   backdrop-filter: blur(14px);
-  border: 1px solid rgba(100, 140, 255, 0.18);
+  border: 1px solid var(--color-border-btn);
   border-radius: 20px;
-  color: #7ba4ff;
+  color: var(--color-btn-text);
   font-size: 12.5px;
   cursor: pointer;
   z-index: 20;
@@ -115,8 +149,8 @@ canvas { display: block; }
   pointer-events: none;
 }
 #back-btn:hover {
-  background: rgba(30, 45, 90, 0.5);
-  border-color: rgba(100,140,255,0.35);
+  background: var(--color-btn-hover-bg);
+  border-color: var(--color-border-btn-hover);
 }
 #back-btn.visible { opacity: 1; pointer-events: auto; }
 
@@ -134,12 +168,12 @@ canvas { display: block; }
 #title-card h1 {
   font-size: 15px;
   font-weight: 600;
-  color: rgba(180, 210, 255, 0.7);
+  color: var(--color-text-title);
   letter-spacing: 1.5px;
   text-transform: uppercase;
   margin-bottom: 4px;
 }
 #title-card p {
   font-size: 11.5px;
-  color: rgba(140, 170, 220, 0.35);
+  color: var(--color-text-subtitle);
 }
