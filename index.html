@@ -1,0 +1,1038 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Interactive Systems Hierarchy Visualization</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+
+    body {
+      background: #0a0e1a;
+      overflow: hidden;
+      font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+      color: #e0e6f0;
+      user-select: none;
+    }
+
+    canvas { display: block; }
+
+    #breadcrumb {
+      position: fixed;
+      top: 20px;
+      left: 50%;
+      transform: translateX(-50%);
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding: 10px 26px;
+      background: rgba(10, 14, 30, 0.88);
+      backdrop-filter: blur(14px);
+      border: 1px solid rgba(100, 140, 255, 0.15);
+      border-radius: 40px;
+      font-size: 13px;
+      letter-spacing: 0.4px;
+      z-index: 20;
+    }
+    .crumb {
+      color: rgba(150, 170, 210, 0.38);
+      cursor: pointer;
+      transition: color 0.3s, text-shadow 0.3s;
+      white-space: nowrap;
+      padding: 2px 4px;
+    }
+    .crumb:hover { color: #8ab4ff; }
+    .crumb.active {
+      color: #b0d0ff;
+      font-weight: 600;
+      text-shadow: 0 0 14px rgba(120,170,255,0.25);
+    }
+    .crumb.visited { color: rgba(150, 170, 210, 0.65); }
+    .crumb-sep { color: rgba(100, 140, 255, 0.22); font-size: 10px; }
+
+    #hint-box {
+      position: fixed;
+      bottom: 34px;
+      left: 50%;
+      transform: translateX(-50%);
+      padding: 11px 30px;
+      background: rgba(10, 14, 30, 0.82);
+      backdrop-filter: blur(14px);
+      border: 1px solid rgba(100, 140, 255, 0.1);
+      border-radius: 30px;
+      font-size: 12.5px;
+      color: rgba(150, 185, 255, 0.6);
+      z-index: 20;
+      transition: opacity 0.6s, transform 0.6s;
+      text-align: center;
+      pointer-events: none;
+    }
+    #hint-box.hidden { opacity: 0; transform: translateX(-50%) translateY(8px); }
+
+    #legend {
+      position: fixed;
+      bottom: 34px;
+      right: 28px;
+      padding: 14px 18px;
+      background: rgba(10, 14, 30, 0.82);
+      backdrop-filter: blur(14px);
+      border: 1px solid rgba(100, 140, 255, 0.08);
+      border-radius: 12px;
+      font-size: 10.5px;
+      z-index: 20;
+      line-height: 2;
+      color: rgba(180, 200, 230, 0.65);
+    }
+    .legend-dot {
+      display: inline-block;
+      width: 8px; height: 8px;
+      border-radius: 2px;
+      margin-right: 7px;
+      vertical-align: middle;
+    }
+    .legend-div {
+      height: 1px;
+      background: rgba(100,140,255,0.07);
+      margin: 4px 0;
+    }
+
+    #back-btn {
+      position: fixed;
+      top: 20px;
+      left: 22px;
+      padding: 7px 16px 7px 12px;
+      background: rgba(10, 14, 30, 0.88);
+      backdrop-filter: blur(14px);
+      border: 1px solid rgba(100, 140, 255, 0.18);
+      border-radius: 20px;
+      color: #7ba4ff;
+      font-size: 12.5px;
+      cursor: pointer;
+      z-index: 20;
+      transition: all 0.35s;
+      opacity: 0;
+      pointer-events: none;
+    }
+    #back-btn:hover {
+      background: rgba(30, 45, 90, 0.5);
+      border-color: rgba(100,140,255,0.35);
+    }
+    #back-btn.visible { opacity: 1; pointer-events: auto; }
+
+    #title-card {
+      position: fixed;
+      top: 72px;
+      left: 50%;
+      transform: translateX(-50%);
+      text-align: center;
+      z-index: 15;
+      pointer-events: none;
+      transition: opacity 1s;
+    }
+    #title-card h1 {
+      font-size: 15px;
+      font-weight: 600;
+      color: rgba(180, 210, 255, 0.7);
+      letter-spacing: 1.5px;
+      text-transform: uppercase;
+      margin-bottom: 4px;
+    }
+    #title-card p {
+      font-size: 11.5px;
+      color: rgba(140, 170, 220, 0.35);
+    }
+  </style>
+</head>
+<body>
+
+<canvas id="c"></canvas>
+
+<div id="title-card">
+  <h1>Systems Hierarchy</h1>
+  <p>Execution → Containers → Orchestration → Cloud</p>
+</div>
+
+<div id="breadcrumb">
+  <span class="crumb active" data-level="0">Execution Stack</span>
+  <span class="crumb-sep">›</span>
+  <span class="crumb" data-level="1">Container</span>
+  <span class="crumb-sep">›</span>
+  <span class="crumb" data-level="2">Orchestration</span>
+  <span class="crumb-sep">›</span>
+  <span class="crumb" data-level="3">Cloud</span>
+</div>
+
+<div id="hint-box">Click a pyramid layer to expand · Hover boundaries to discover siblings</div>
+<button id="back-btn">‹ Back</button>
+
+<div id="legend">
+  <div><span class="legend-dot" style="background:#ff6b6b"></span>Binary Execution</div>
+  <div><span class="legend-dot" style="background:#ffa94d"></span>Command Line</div>
+  <div><span class="legend-dot" style="background:#69db7c"></span>Version Control</div>
+  <div><span class="legend-dot" style="background:#74c0fc"></span>Programming</div>
+  <div class="legend-div"></div>
+  <div><span class="legend-dot" style="background:rgba(90,155,255,0.55);outline:1px solid rgba(90,155,255,0.5)"></span>Container</div>
+  <div><span class="legend-dot" style="background:rgba(170,100,255,0.4);outline:1px solid rgba(170,100,255,0.5)"></span>Orchestration</div>
+  <div><span class="legend-dot" style="background:rgba(80,230,175,0.3);outline:1px solid rgba(80,230,175,0.45)"></span>Cloud</div>
+</div>
+
+<script>
+/* ═══════════════════════════════════════════════════════════════════
+   INTERACTIVE SYSTEMS HIERARCHY VISUALIZATION
+   ═══════════════════════════════════════════════════════════════════ */
+
+const canvas = document.getElementById('c');
+const ctx    = canvas.getContext('2d');
+let W, H, DPR;
+
+function resize() {
+  DPR = Math.min(devicePixelRatio || 1, 2);
+  W = innerWidth; H = innerHeight;
+  canvas.width  = W * DPR;
+  canvas.height = H * DPR;
+  canvas.style.width  = W + 'px';
+  canvas.style.height = H + 'px';
+  ctx.setTransform(DPR, 0, 0, DPR, 0, 0);
+}
+addEventListener('resize', resize); resize();
+
+const lerp  = (a, b, t) => a + (b - a) * t;
+const clamp = (v, lo, hi) => Math.max(lo, Math.min(hi, v));
+
+/* ═══════════════════════════════════════════════════════════════════
+   PYRAMID DATA — each layer has expandable child nodes
+   ═══════════════════════════════════════════════════════════════════ */
+const PYR = [
+  { c: '#ff6b6b', lbl: 'Binary Execution', sub: 'Machine code · CPU instructions',
+    children: null },  // no expandable children for base layer
+  { c: '#ffa94d', lbl: 'Command Line', sub: 'cmd · bash · PowerShell',
+    children: [
+      { lbl: 'Bash',       icon: '⟩_', c: '#ffbd6b' },
+      { lbl: 'CMD',        icon: 'C:\\', c: '#ffa94d' },
+      { lbl: 'PowerShell', icon: 'PS>', c: '#ff9633' },
+    ]},
+  { c: '#69db7c', lbl: 'Version Control', sub: 'git · svn · mercurial',
+    children: [
+      { lbl: 'GitHub',    icon: '⊙', c: '#7ae68a' },
+      { lbl: 'GitLab',    icon: '⊕', c: '#69db7c' },
+      { lbl: 'Bitbucket', icon: '⊗', c: '#5cc96e' },
+    ]},
+  { c: '#74c0fc', lbl: 'Programming', sub: 'JavaScript · Python · Java',
+    children: [
+      { lbl: 'JavaScript', icon: 'JS', c: '#f0db4f' },
+      { lbl: 'Python',     icon: 'Py', c: '#4b8bbe' },
+      { lbl: 'Java',       icon: 'Jv', c: '#f89820' },
+    ]},
+];
+
+/* ═══════════════════════════════════════════════════════════════════
+   STATE
+   ═══════════════════════════════════════════════════════════════════ */
+const S = {
+  level: 0,
+  cam:  { x: 0, y: 0, z: 1 },
+  tgt:  { x: 0, y: 0, z: 1 },
+  mx: 0, my: 0, wmx: 0, wmy: 0,
+  t: 0,
+  busy: false,
+
+  // Sibling reveal alphas
+  sibC_a: 0, sibC_t: 0,
+  sibO_a: 0, sibO_t: 0,
+
+  // Hover state for boundaries (dotted outline highlight)
+  hovSibC: false,
+  hovSibO: false,
+  hovMainC: false,    // main container hover
+  hovMainO: false,    // main orchestration hover
+  hovCloud: false,    // cloud hover
+
+  // Pyramid layer expansion
+  expandedLayer: -1,       // which layer index is expanded (-1 = none)
+  expandAnim: 0,           // 0→1 animation progress
+  expandTarget: 0,         // target for expandAnim
+  hoveredLayer: -1,        // which pyramid layer the mouse is over
+  hoveredChild: -1,        // which child node is hovered
+
+  // Geometry cache — filled during draw, used for hit-testing
+  layerRects: [],          // [{x, y, w, h, idx}] in world coords relative to main pyramid
+  childRects: [],          // [{x, y, r, idx}]
+};
+
+const STARS = Array.from({length: 280}, () => ({
+  x: (Math.random()-0.5)*12000,
+  y: (Math.random()-0.5)*12000,
+  r: Math.random()*1.3+0.25,
+  b: Math.random()*0.6+0.4,
+  sp: Math.random()*0.7+0.15,
+}));
+
+/* ═══════════════════════════════════════════════════════════════════
+   CAMERA PRESETS & POSITIONS
+   ═══════════════════════════════════════════════════════════════════ */
+const VIEWS = [
+  { x:   0, y:   0, z: 1.8   },  // L0 – pyramid inside container (close)
+  { x: 115, y:   0, z: 1.0   },  // L1 – both containers visible
+  { x:   0, y:  20, z: 0.42  },  // L2 – orchestration cluster
+  { x:   0, y:  40, z: 0.13  },  // L3 – cloud
+];
+
+const SIB_C = { x: 340, y: 12 };
+const SIB_O = { x: 720, y: 50 };
+
+const s2w = (sx,sy) => ({x:(sx-W/2)/S.cam.z+S.cam.x, y:(sy-H/2)/S.cam.z+S.cam.y});
+const w2s = (wx,wy) => ({x:(wx-S.cam.x)*S.cam.z+W/2, y:(wy-S.cam.y)*S.cam.z+H/2});
+
+/* ═══════════════════════════════════════════════════════════════════
+   DRAWING HELPERS
+   ═══════════════════════════════════════════════════════════════════ */
+function rrect(cx,cy,w,h,r) {
+  const x=cx-w/2, y=cy-h/2;
+  ctx.beginPath();
+  ctx.moveTo(x+r,y); ctx.lineTo(x+w-r,y);
+  ctx.quadraticCurveTo(x+w,y,x+w,y+r); ctx.lineTo(x+w,y+h-r);
+  ctx.quadraticCurveTo(x+w,y+h,x+w-r,y+h); ctx.lineTo(x+r,y+h);
+  ctx.quadraticCurveTo(x,y+h,x,y+h-r); ctx.lineTo(x,y+r);
+  ctx.quadraticCurveTo(x,y,x+r,y);
+  ctx.closePath();
+}
+
+/* ═══════════════════════════════════════════════════════════════════
+   DRAW: CHILD NODES (expanded from a pyramid layer)
+   ═══════════════════════════════════════════════════════════════════ */
+function drawChildNodes(cx, cy, layerW, sc, layerIdx, anim) {
+  if (anim < 0.01) return;
+  const layer = PYR[layerIdx];
+  if (!layer.children) return;
+
+  const children = layer.children;
+  const n = children.length;
+  const nodeR = 26 * sc;
+  const spreadY = 52 * sc;       // vertical spacing between child nodes
+  const offsetX = -layerW/2 - 65*sc;  // to the left of the layer
+
+  // Clear child rects for this frame
+  if (layerIdx === S.expandedLayer) S.childRects = [];
+
+  ctx.save();
+  ctx.globalAlpha = anim;
+
+  // Group center
+  const groupCY = cy + 18*sc;   // vertically centered relative to layer
+
+  for (let i = 0; i < n; i++) {
+    const child = children[i];
+    const yOff = (i - (n-1)/2) * spreadY;
+
+    // Animate: start from layer edge, expand outward to left
+    const nx = cx + offsetX * anim;
+    const ny = groupCY + yOff * anim;
+
+    // Connecting line from layer edge to child
+    const lineStartX = cx - layerW/2 + 4*sc;
+    const lineStartY = cy + 18*sc;
+    ctx.strokeStyle = child.c + '44';
+    ctx.lineWidth = 1.5 * sc;
+    ctx.setLineDash([4*sc, 3*sc]);
+    ctx.beginPath();
+    ctx.moveTo(lineStartX, lineStartY);
+    // Curve outward
+    const cpx = (lineStartX + nx + nodeR) / 2;
+    ctx.quadraticCurveTo(cpx, lineStartY, nx + nodeR, ny);
+    ctx.stroke();
+    ctx.setLineDash([]);
+
+    // Glow
+    const isHov = (S.hoveredChild === i && S.expandedLayer === layerIdx);
+    const pulse = isHov ? 0.5+0.5*Math.sin(S.t*3) : 0;
+
+    ctx.shadowColor = child.c + (isHov ? '77' : '33');
+    ctx.shadowBlur = (isHov ? 20 : 8) * sc;
+
+    // Node rounded rect (pill shape)
+    const nw = 72*sc, nh = 36*sc, nr = 10*sc;
+    rrect(nx, ny, nw, nh, nr);
+    ctx.fillStyle = child.c + (isHov ? '30' : '18');
+    ctx.fill();
+    ctx.strokeStyle = child.c + (isHov ? 'cc' : '77');
+    ctx.lineWidth = (isHov ? 2.5 : 1.4) * sc;
+    ctx.setLineDash([5*sc, 3*sc]);
+    ctx.stroke();
+    ctx.setLineDash([]);
+    ctx.shadowBlur = 0;
+
+    // Icon + label
+    if (sc > 0.25) {
+      ctx.fillStyle = child.c + 'dd';
+      ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+      ctx.font = `700 ${Math.max(7, 10*sc)}px "Segoe UI",system-ui,sans-serif`;
+      ctx.fillText(child.icon, nx - 20*sc, ny);
+
+      ctx.fillStyle = '#ffffffdd';
+      ctx.font = `500 ${Math.max(7, 9.5*sc)}px "Segoe UI",system-ui,sans-serif`;
+      ctx.fillText(child.lbl, nx + 12*sc, ny);
+    }
+
+    // Store rect for hit testing (using circular approx for simplicity)
+    if (layerIdx === S.expandedLayer) {
+      S.childRects.push({ x: nx, y: ny, r: Math.max(nw, nh)/2, idx: i });
+    }
+  }
+
+  ctx.restore();
+}
+
+/* ═══════════════════════════════════════════════════════════════════
+   DRAW: PYRAMID
+   ═══════════════════════════════════════════════════════════════════ */
+function drawPyramid(cx, cy, sc, a, isMainPyramid) {
+  if (a < 0.01) return;
+  const n = PYR.length;
+  const lh = 40*sc, bw = 200*sc, tw = 56*sc, gap = 5*sc;
+  const totH = n*(lh+gap)-gap;
+  const base = cy + totH/2;
+
+  // Only track geometry for the primary main-view pyramid
+  if (isMainPyramid) S.layerRects = [];
+
+  ctx.save(); ctx.globalAlpha = a;
+
+  for (let i = 0; i < n; i++) {
+    const t  = i/(n-1);
+    const w  = bw + (tw-bw)*t;
+    const nw = i<n-1 ? bw+(tw-bw)*((i+1)/(n-1)) : w*0.62;
+    const y  = base - i*(lh+gap) - lh;
+
+    const isHov = isMainPyramid && S.hoveredLayer === i && S.level === 0;
+    const isExp = isMainPyramid && S.expandedLayer === i;
+    const pulse = isHov ? 0.5+0.5*Math.sin(S.t*3.5) : 0;
+    const canExpand = PYR[i].children !== null;
+
+    // Trapezoid path
+    ctx.beginPath();
+    ctx.moveTo(cx-w/2, y+lh);
+    ctx.lineTo(cx+w/2, y+lh);
+    ctx.lineTo(cx+nw/2, y);
+    ctx.lineTo(cx-nw/2, y);
+    ctx.closePath();
+
+    // Fill
+    const g = ctx.createLinearGradient(cx-w/2, y, cx+w/2, y+lh);
+    g.addColorStop(0, PYR[i].c + (isHov ? 'ee' : 'cc'));
+    g.addColorStop(1, PYR[i].c + (isHov ? 'aa' : '77'));
+    ctx.fillStyle = g;
+    ctx.fill();
+
+    // Border — enhanced on hover with dotted highlight
+    if (isHov && canExpand) {
+      ctx.shadowColor = PYR[i].c + '88';
+      ctx.shadowBlur = 12 * sc;
+      ctx.strokeStyle = PYR[i].c;
+      ctx.lineWidth = 2.5 * sc;
+      ctx.setLineDash([6*sc, 3*sc]);
+      ctx.stroke();
+      ctx.setLineDash([]);
+      ctx.shadowBlur = 0;
+    } else if (isExp) {
+      ctx.strokeStyle = PYR[i].c;
+      ctx.lineWidth = 2.2 * sc;
+      ctx.setLineDash([6*sc, 3*sc]);
+      ctx.stroke();
+      ctx.setLineDash([]);
+    } else {
+      ctx.strokeStyle = PYR[i].c + 'aa';
+      ctx.lineWidth = 1.2*sc;
+      ctx.stroke();
+    }
+
+    // Labels
+    if (sc > 0.26) {
+      ctx.fillStyle = '#fff';
+      ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+      ctx.font = `600 ${Math.max(9,13.5*sc)}px "Segoe UI",system-ui,sans-serif`;
+      ctx.fillText(PYR[i].lbl, cx, y+lh*0.4);
+      if (sc > 0.52) {
+        ctx.fillStyle = 'rgba(255,255,255,0.38)';
+        ctx.font = `${Math.max(7,9.5*sc)}px "Segoe UI",system-ui,sans-serif`;
+        ctx.fillText(PYR[i].sub, cx, y+lh*0.76);
+      }
+    }
+
+    // Expand hint on hover
+    if (isHov && canExpand && sc > 0.5) {
+      const p2 = 0.5 + 0.5*Math.sin(S.t*4);
+      ctx.globalAlpha = a * (0.5 + 0.5*p2);
+      ctx.fillStyle = '#fff';
+      ctx.font = `${Math.max(8, 9*sc)}px "Segoe UI",system-ui,sans-serif`;
+      ctx.textAlign = 'right';
+      ctx.fillText('click to expand ›', cx + w/2 - 6*sc, y + lh*0.5);
+      ctx.globalAlpha = a;
+    }
+
+    // Store world-space rect for hit testing
+    if (isMainPyramid) {
+      S.layerRects.push({
+        // Store the trapezoid bounding box in world coords
+        x: cx - w/2, y: y,
+        w: w, h: lh,
+        idx: i,
+      });
+    }
+
+    // Draw child nodes if this layer is expanded
+    if (isMainPyramid && isExp) {
+      drawChildNodes(cx, y, w, sc, i, S.expandAnim);
+    }
+  }
+
+  // Top glow
+  if (sc > 0.3) {
+    const gy = base - (n-1)*(lh+gap) - lh;
+    const gr = ctx.createRadialGradient(cx,gy,0, cx,gy,50*sc);
+    gr.addColorStop(0, 'rgba(116,192,252,0.14)');
+    gr.addColorStop(1, 'rgba(116,192,252,0)');
+    ctx.fillStyle = gr;
+    ctx.beginPath(); ctx.arc(cx,gy,50*sc,0,Math.PI*2); ctx.fill();
+  }
+
+  // Abstraction arrow
+  if (sc > 0.6 && isMainPyramid) {
+    const ax = cx + bw/2 + 28*sc;
+    const ay1 = base;
+    const ay2 = base - totH;
+    ctx.strokeStyle = 'rgba(255,255,255,0.08)';
+    ctx.lineWidth = 1.2*sc;
+    ctx.beginPath(); ctx.moveTo(ax, ay1); ctx.lineTo(ax, ay2); ctx.stroke();
+    ctx.beginPath(); ctx.moveTo(ax, ay2-4*sc);
+    ctx.lineTo(ax-4*sc, ay2+4*sc); ctx.lineTo(ax+4*sc, ay2+4*sc);
+    ctx.closePath(); ctx.fillStyle = 'rgba(255,255,255,0.08)'; ctx.fill();
+    ctx.save(); ctx.translate(ax+12*sc, (ay1+ay2)/2);
+    ctx.rotate(-Math.PI/2);
+    ctx.fillStyle = 'rgba(255,255,255,0.1)';
+    ctx.font = `${9*sc}px "Segoe UI",system-ui,sans-serif`;
+    ctx.textAlign = 'center';
+    ctx.fillText('Increasing Abstraction', 0, 0);
+    ctx.restore();
+  }
+
+  ctx.restore();
+}
+
+/* ═══════════════════════════════════════════════════════════════════
+   DRAW: CONTAINER — with hover-highlight dotted outline
+   ═══════════════════════════════════════════════════════════════════ */
+function drawContainer(cx, cy, sc, a, hl, isMainPyramid) {
+  if (a < 0.005) return;
+  const w = 310*sc, h = 290*sc, r = 18*sc;
+
+  ctx.save(); ctx.globalAlpha = a;
+
+  const pulse = hl ? 0.5+0.5*Math.sin(S.t*2.8) : 0;
+
+  // Glow
+  ctx.shadowColor = `rgba(80,150,255,${0.12+pulse*0.12})`;
+  ctx.shadowBlur  = (hl ? 25 : 10)*sc;
+
+  // Body
+  rrect(cx, cy, w, h, r);
+  ctx.fillStyle = `rgba(12,22,55,${0.4+pulse*0.06})`;
+  ctx.fill();
+
+  // Border — DOTTED, highlighted on hover
+  ctx.strokeStyle = `rgba(80,150,255,${hl ? 0.6+pulse*0.25 : 0.28})`;
+  ctx.lineWidth   = (hl ? 2.8 : 1.3)*sc;
+  ctx.setLineDash([9*sc, 5*sc]);
+  ctx.stroke();
+  ctx.setLineDash([]);
+  ctx.shadowBlur = 0;
+
+  // Pyramid inside
+  drawPyramid(cx, cy+18*sc, sc*0.7, 1, isMainPyramid && S.level <= 1);
+
+  // Label
+  if (sc > 0.12) {
+    ctx.fillStyle = `rgba(100,175,255,${hl ? 1 : 0.85})`;
+    ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+    ctx.font = `600 ${Math.max(8,13*sc)}px "Segoe UI",system-ui,sans-serif`;
+    ctx.fillText('Container', cx, cy - h/2 + 20*sc);
+    if (sc > 0.28) {
+      ctx.fillStyle = `rgba(100,175,255,${hl ? 0.5 : 0.35})`;
+      ctx.font = `${Math.max(7,9.5*sc)}px "Segoe UI",system-ui,sans-serif`;
+      ctx.fillText('Docker · Podman', cx, cy - h/2 + 35*sc);
+    }
+  }
+
+  // Click prompt on sibling
+  if (hl && !isMainPyramid && a > 0.55) {
+    const p = 0.35+0.65*Math.sin(S.t*3.2);
+    ctx.globalAlpha = a*p;
+    ctx.fillStyle = 'rgba(130,190,255,0.8)';
+    ctx.font = `500 ${Math.max(9,11*sc)}px "Segoe UI",system-ui,sans-serif`;
+    ctx.textAlign = 'center';
+    ctx.fillText('⬚ Click to zoom out', cx, cy + h/2 + 24*sc);
+  }
+
+  ctx.restore();
+}
+
+/* ═══════════════════════════════════════════════════════════════════
+   DRAW: ORCHESTRATION — with hover-highlight dotted outline
+   ═══════════════════════════════════════════════════════════════════ */
+function drawOrch(cx, cy, sc, a, hl, isMain) {
+  if (a < 0.005) return;
+  const w = 620*sc, h = 540*sc, r = 30*sc;
+
+  const csc = sc*0.36;
+  const cpos = [
+    {x:cx-175*sc, y:cy-75*sc },
+    {x:cx+175*sc, y:cy-75*sc },
+    {x:cx-88*sc,  y:cy+105*sc},
+    {x:cx+88*sc,  y:cy+105*sc},
+    {x:cx,        y:cy-190*sc},
+  ];
+
+  ctx.save(); ctx.globalAlpha = a;
+
+  const pulse = hl ? 0.5+0.5*Math.sin(S.t*2.4) : 0;
+
+  // Boundary — DOTTED, highlighted on hover
+  ctx.shadowColor = `rgba(160,95,255,${0.09+pulse*0.1})`;
+  ctx.shadowBlur  = (hl ? 28 : 12)*sc;
+
+  rrect(cx, cy, w, h, r);
+  ctx.fillStyle = `rgba(22,12,48,${0.22+pulse*0.05})`;
+  ctx.fill();
+  ctx.strokeStyle = `rgba(160,95,255,${hl ? 0.55+pulse*0.2 : 0.22})`;
+  ctx.lineWidth   = (hl ? 2.8 : 1.2)*sc;
+  ctx.setLineDash([13*sc, 7*sc]);
+  ctx.stroke();
+  ctx.setLineDash([]);
+  ctx.shadowBlur = 0;
+
+  // Network mesh
+  ctx.strokeStyle = 'rgba(160,120,255,0.06)';
+  ctx.lineWidth = 1*sc;
+  for (let i=0;i<cpos.length;i++)
+    for (let j=i+1;j<cpos.length;j++){
+      ctx.beginPath();ctx.moveTo(cpos[i].x,cpos[i].y);
+      ctx.lineTo(cpos[j].x,cpos[j].y);ctx.stroke();
+    }
+
+  // Data-flow particles
+  if (sc > 0.06) {
+    for (let i=0;i<cpos.length;i++)
+      for (let j=i+1;j<cpos.length;j++){
+        const prog = (S.t*0.25+i*0.18+j*0.14)%1;
+        const px = lerp(cpos[i].x,cpos[j].x,prog);
+        const py = lerp(cpos[i].y,cpos[j].y,prog);
+        ctx.beginPath(); ctx.arc(px,py,2.2*sc,0,Math.PI*2);
+        ctx.fillStyle='rgba(175,135,255,0.28)'; ctx.fill();
+      }
+  }
+
+  // Containers inside
+  for (const p of cpos) drawContainer(p.x,p.y,csc,1,false,false);
+
+  // Label
+  if (sc > 0.05) {
+    ctx.globalAlpha = a;
+    ctx.fillStyle = `rgba(195,135,255,${hl ? 1 : 0.85})`;
+    ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+    ctx.font = `600 ${Math.max(8,16*sc)}px "Segoe UI",system-ui,sans-serif`;
+    ctx.fillText('Orchestration', cx, cy - h/2 + 26*sc);
+    if (sc > 0.1) {
+      ctx.fillStyle = `rgba(195,135,255,${hl ? 0.5 : 0.35})`;
+      ctx.font = `${Math.max(7,10.5*sc)}px "Segoe UI",system-ui,sans-serif`;
+      ctx.fillText('Kubernetes · Docker Swarm', cx, cy - h/2 + 44*sc);
+    }
+  }
+
+  // Click prompt on sibling
+  if (hl && !isMain && a > 0.55) {
+    const p = 0.35+0.65*Math.sin(S.t*3.2);
+    ctx.globalAlpha = a*p;
+    ctx.fillStyle = 'rgba(195,155,255,0.75)';
+    ctx.font = `500 ${Math.max(9,12*sc)}px "Segoe UI",system-ui,sans-serif`;
+    ctx.textAlign = 'center';
+    ctx.fillText('⬚ Click to zoom out', cx, cy + h/2 + 30*sc);
+  }
+
+  ctx.restore();
+}
+
+/* ═══════════════════════════════════════════════════════════════════
+   DRAW: CLOUD — with hover-highlight dotted outline
+   ═══════════════════════════════════════════════════════════════════ */
+function drawCloud(cx, cy, sc, a) {
+  if (a < 0.005) return;
+  const w = 1600*sc, h = 1050*sc, r = 55*sc;
+  const hl = S.hovCloud;
+
+  const osc = sc*0.30;
+  const opos = [
+    {x:cx-500*sc, y:cy-210*sc},
+    {x:cx+500*sc, y:cy-210*sc},
+    {x:cx,        y:cy+280*sc},
+    {x:cx-320*sc, y:cy+80*sc },
+    {x:cx+320*sc, y:cy+80*sc },
+  ];
+
+  ctx.save(); ctx.globalAlpha = a;
+
+  const pulse = hl ? 0.5+0.5*Math.sin(S.t*2.2) : 0;
+
+  ctx.shadowColor = `rgba(70,230,170,${0.05+pulse*0.08})`;
+  ctx.shadowBlur  = (hl ? 30 : 22)*sc;
+
+  rrect(cx, cy+25*sc, w, h, r);
+  ctx.fillStyle = `rgba(8,28,22,${0.18+pulse*0.04})`;
+  ctx.fill();
+  ctx.strokeStyle = `rgba(70,230,170,${hl ? 0.4+pulse*0.2 : 0.2})`;
+  ctx.lineWidth = (hl ? 3 : 2)*sc;
+  ctx.setLineDash([20*sc, 12*sc]);
+  ctx.stroke();
+  ctx.setLineDash([]);
+  ctx.shadowBlur = 0;
+
+  // WAN mesh
+  ctx.strokeStyle = 'rgba(70,230,170,0.035)';
+  ctx.lineWidth = 1.8*sc;
+  for (let i=0;i<opos.length;i++)
+    for (let j=i+1;j<opos.length;j++){
+      ctx.beginPath();ctx.moveTo(opos[i].x,opos[i].y);
+      ctx.lineTo(opos[j].x,opos[j].y);ctx.stroke();
+    }
+
+  // WAN data pulses
+  if (sc > 0.02) {
+    for (let i=0;i<opos.length;i++)
+      for (let j=i+1;j<opos.length;j++){
+        const prog = (S.t*0.15+i*0.2+j*0.12)%1;
+        const px = lerp(opos[i].x,opos[j].x,prog);
+        const py = lerp(opos[i].y,opos[j].y,prog);
+        ctx.beginPath(); ctx.arc(px,py,3.5*sc,0,Math.PI*2);
+        ctx.fillStyle='rgba(70,230,170,0.2)'; ctx.fill();
+      }
+  }
+
+  // Orchestration clusters
+  for (const p of opos) drawOrch(p.x,p.y,osc,1,false,false);
+
+  // Label
+  if (sc > 0.025) {
+    ctx.globalAlpha = a;
+    ctx.fillStyle = `rgba(70,230,170,${hl ? 1 : 0.92})`;
+    ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+    ctx.font = `600 ${Math.max(10,22*sc)}px "Segoe UI",system-ui,sans-serif`;
+    ctx.fillText('☁  Cloud Computing', cx, cy+25*sc - h/2 + 40*sc);
+    if (sc > 0.035) {
+      ctx.fillStyle = `rgba(70,230,170,${hl ? 0.5 : 0.35})`;
+      ctx.font = `${Math.max(8,13*sc)}px "Segoe UI",system-ui,sans-serif`;
+      ctx.fillText('AWS  ·  GCP  ·  Azure  —  Distributed Infrastructure', cx, cy+25*sc - h/2 + 64*sc);
+    }
+  }
+
+  ctx.restore();
+}
+
+/* ═══════════════════════════════════════════════════════════════════
+   STARS
+   ═══════════════════════════════════════════════════════════════════ */
+function drawStars() {
+  for (const s of STARS) {
+    const px = 0.025+s.r*0.012;
+    const sx = (s.x-S.cam.x*px)*S.cam.z+W/2;
+    const sy = (s.y-S.cam.y*px)*S.cam.z+H/2;
+    if (sx<-10||sx>W+10||sy<-10||sy>H+10) continue;
+    const tw = 0.4+0.6*Math.sin(S.t*s.sp+s.x*0.01);
+    ctx.beginPath();
+    ctx.arc(sx,sy,s.r*clamp(S.cam.z*0.6+0.35,0.3,1.4),0,Math.PI*2);
+    ctx.fillStyle = `rgba(170,195,255,${tw*0.5*s.b})`;
+    ctx.fill();
+  }
+}
+
+/* ═══════════════════════════════════════════════════════════════════
+   HIT TESTING
+   ═══════════════════════════════════════════════════════════════════ */
+function inBox(wx,wy,cx,cy,hw,hh){
+  return Math.abs(wx-cx)<hw && Math.abs(wy-cy)<hh;
+}
+function nearBorder(wx,wy,cx,cy,hw,hh,m){
+  return inBox(wx,wy,cx,cy,hw+m,hh+m) && !inBox(wx,wy,cx,cy,hw-m*0.25,hh-m*0.25);
+}
+
+// Half-extents
+const C_HW=155, C_HH=145;
+const O_HW=310, O_HH=270;
+const CL_HW=800, CL_HH=525;  // cloud
+
+/* ═══════════════════════════════════════════════════════════════════
+   UI
+   ═══════════════════════════════════════════════════════════════════ */
+const hintEl   = document.getElementById('hint-box');
+const backBtn  = document.getElementById('back-btn');
+const crumbs   = document.querySelectorAll('.crumb');
+const titleEl  = document.getElementById('title-card');
+
+const HINTS = [
+  'Click a pyramid layer to expand  ·  Hover near the boundary to discover siblings',
+  'Click the sibling container to zoom into orchestration view',
+  'Hover near the orchestration boundary to reveal sibling clusters',
+  'Full cloud abstraction  —  use breadcrumbs or ‹ Back to navigate',
+];
+
+function updateUI() {
+  crumbs.forEach((c,i) => {
+    c.classList.toggle('active', i===S.level);
+    c.classList.toggle('visited', i<S.level);
+  });
+  backBtn.classList.toggle('visible', S.level>0);
+  hintEl.textContent = HINTS[S.level];
+  titleEl.style.opacity = S.level === 0 ? '1' : '0';
+}
+
+/* ═══════════════════════════════════════════════════════════════════
+   NAVIGATION
+   ═══════════════════════════════════════════════════════════════════ */
+function goTo(lv) {
+  if (lv===S.level||S.busy) return;
+  S.busy = true;
+  S.level = lv;
+  S.tgt.x = VIEWS[lv].x;
+  S.tgt.y = VIEWS[lv].y;
+  S.tgt.z = VIEWS[lv].z;
+
+  // Collapse any expanded layer when changing levels
+  S.expandedLayer = -1;
+  S.expandTarget = 0;
+
+  if (lv <= 0) S.sibC_t = 0;
+  if (lv <= 1) S.sibO_t = 0;
+  if (lv >= 1) S.sibC_t = 1;
+
+  updateUI();
+  setTimeout(()=>{ S.busy=false; }, 1100);
+}
+
+crumbs.forEach(c=>c.addEventListener('click',()=>goTo(+c.dataset.level)));
+backBtn.addEventListener('click',()=>{ if(S.level>0) goTo(S.level-1); });
+addEventListener('keydown',e=>{ if(e.key==='Escape'&&S.level>0) goTo(S.level-1); });
+
+/* ═══════════════════════════════════════════════════════════════════
+   MOUSE HANDLING
+   ═══════════════════════════════════════════════════════════════════ */
+canvas.addEventListener('mousemove', e => {
+  S.mx = e.clientX; S.my = e.clientY;
+  const wm = s2w(e.clientX, e.clientY);
+  S.wmx = wm.x; S.wmy = wm.y;
+
+  let cur = 'default';
+  S.hovSibC = false;
+  S.hovSibO = false;
+  S.hovMainC = false;
+  S.hovMainO = false;
+  S.hovCloud = false;
+  S.hoveredLayer = -1;
+  S.hoveredChild = -1;
+
+  // ── Level 0: Pyramid view ──────────────────────
+  if (S.level === 0) {
+    // Check child node hovers first (highest priority)
+    if (S.expandedLayer >= 0 && S.expandAnim > 0.5) {
+      for (const cr of S.childRects) {
+        const dx = wm.x - cr.x, dy = wm.y - cr.y;
+        if (dx*dx + dy*dy < cr.r*cr.r * 1.3) {
+          S.hoveredChild = cr.idx;
+          cur = 'pointer';
+          break;
+        }
+      }
+    }
+
+    // Check pyramid layer hovers (for expand)
+    if (S.hoveredChild < 0) {
+      for (const lr of S.layerRects) {
+        if (wm.x >= lr.x && wm.x <= lr.x + lr.w &&
+            wm.y >= lr.y && wm.y <= lr.y + lr.h) {
+          S.hoveredLayer = lr.idx;
+          if (PYR[lr.idx].children) cur = 'pointer';
+          break;
+        }
+      }
+    }
+
+    // Hover on main container boundary → highlight + reveal sibling
+    if (nearBorder(wm.x,wm.y, 0,0, C_HW,C_HH, 65)) {
+      S.sibC_t = 1;
+      S.hovMainC = true;
+    } else if (inBox(wm.x, wm.y, 0, 0, C_HW+20, C_HH+20) &&
+               !inBox(wm.x, wm.y, 0, 0, C_HW-30, C_HH-30)) {
+      // Near-ish to the border but not deep inside
+      S.hovMainC = true;
+    }
+
+    // Hover on sibling container
+    if (S.sibC_a > 0.35 && inBox(wm.x,wm.y, SIB_C.x,SIB_C.y, C_HW,C_HH)) {
+      S.hovSibC = true; cur = 'pointer';
+    }
+  }
+
+  // ── Level 1: Both containers visible ───────────
+  if (S.level === 1) {
+    if (nearBorder(wm.x,wm.y, 0,0, C_HW,C_HH, 50)) S.hovMainC = true;
+    if (S.sibC_a > 0.35 && inBox(wm.x,wm.y, SIB_C.x,SIB_C.y, C_HW,C_HH)) {
+      S.hovSibC = true; cur = 'pointer';
+    }
+  }
+
+  // ── Level 2: Orchestration ─────────────────────
+  if (S.level === 2) {
+    if (nearBorder(wm.x,wm.y, 0,20, O_HW,O_HH, 100)) {
+      S.sibO_t = 1;
+      S.hovMainO = true;
+    } else if (inBox(wm.x,wm.y, 0,20, O_HW+40,O_HH+40) &&
+               !inBox(wm.x,wm.y, 0,20, O_HW-50,O_HH-50)) {
+      S.hovMainO = true;
+    }
+    if (S.sibO_a > 0.35 && inBox(wm.x,wm.y, SIB_O.x,SIB_O.y, O_HW,O_HH)) {
+      S.hovSibO = true; cur = 'pointer';
+    }
+  }
+
+  // ── Level 3: Cloud ─────────────────────────────
+  if (S.level === 3) {
+    if (inBox(wm.x,wm.y, 0,65, CL_HW+50,CL_HH+50) &&
+        !inBox(wm.x,wm.y, 0,65, CL_HW-80,CL_HH-80)) {
+      S.hovCloud = true;
+    }
+  }
+
+  canvas.style.cursor = cur;
+});
+
+canvas.addEventListener('click', e => {
+  if (S.busy) return;
+  const wm = s2w(e.clientX, e.clientY);
+
+  // ── Level 0: Click pyramid layers to expand ────
+  if (S.level === 0) {
+    // Check if clicking a child node (no-op for now, just visual)
+    if (S.expandedLayer >= 0 && S.expandAnim > 0.5) {
+      for (const cr of S.childRects) {
+        const dx = wm.x - cr.x, dy = wm.y - cr.y;
+        if (dx*dx + dy*dy < cr.r*cr.r * 1.3) {
+          return; // consumed — child node clicked
+        }
+      }
+    }
+
+    // Click a pyramid layer to expand/collapse
+    for (const lr of S.layerRects) {
+      if (wm.x >= lr.x && wm.x <= lr.x + lr.w &&
+          wm.y >= lr.y && wm.y <= lr.y + lr.h) {
+        if (PYR[lr.idx].children) {
+          if (S.expandedLayer === lr.idx) {
+            // Collapse
+            S.expandTarget = 0;
+            setTimeout(() => { if (S.expandAnim < 0.05) S.expandedLayer = -1; }, 400);
+          } else {
+            // Expand new layer (collapse previous first)
+            S.expandedLayer = lr.idx;
+            S.expandAnim = 0;
+            S.expandTarget = 1;
+          }
+        }
+        return; // consumed
+      }
+    }
+  }
+
+  // Click sibling container → level 2
+  if ((S.level===0||S.level===1) && S.sibC_a>0.35 &&
+      inBox(wm.x,wm.y, SIB_C.x,SIB_C.y, C_HW,C_HH)) {
+    goTo(2); return;
+  }
+
+  // Click sibling orch → level 3
+  if (S.level===2 && S.sibO_a>0.35 &&
+      inBox(wm.x,wm.y, SIB_O.x,SIB_O.y, O_HW,O_HH)) {
+    goTo(3); return;
+  }
+
+  // Click outside expanded nodes → collapse
+  if (S.level === 0 && S.expandedLayer >= 0) {
+    S.expandTarget = 0;
+    setTimeout(() => { if (S.expandAnim < 0.05) S.expandedLayer = -1; }, 400);
+  }
+});
+
+/* ═══════════════════════════════════════════════════════════════════
+   MAIN LOOP
+   ═══════════════════════════════════════════════════════════════════ */
+function tick() {
+  S.t += 0.016;
+  const sp = 0.04;
+  S.cam.x = lerp(S.cam.x, S.tgt.x, sp);
+  S.cam.y = lerp(S.cam.y, S.tgt.y, sp);
+  S.cam.z = lerp(S.cam.z, S.tgt.z, sp);
+
+  S.sibC_a = lerp(S.sibC_a, S.sibC_t, 0.05);
+  S.sibO_a = lerp(S.sibO_a, S.sibO_t, 0.05);
+
+  // Expand animation
+  S.expandAnim = lerp(S.expandAnim, S.expandTarget, 0.08);
+  if (S.expandTarget === 0 && S.expandAnim < 0.01) {
+    S.expandAnim = 0;
+    if (S.expandedLayer >= 0) S.expandedLayer = -1;
+  }
+}
+
+function render() {
+  ctx.clearRect(0,0,W,H);
+
+  const bg = ctx.createRadialGradient(W/2,H/2,0, W/2,H/2,W*0.9);
+  bg.addColorStop(0,'#0d1425');
+  bg.addColorStop(1,'#050810');
+  ctx.fillStyle = bg;
+  ctx.fillRect(0,0,W,H);
+
+  drawStars();
+
+  ctx.save();
+  ctx.translate(W/2, H/2);
+  ctx.scale(S.cam.z, S.cam.z);
+  ctx.translate(-S.cam.x, -S.cam.y);
+
+  // ── Cloud ─────────────────────────────────
+  if (S.level >= 3) {
+    drawCloud(0, 80, 1, 1);
+  }
+
+  // ── Orchestration ─────────────────────────
+  if (S.level === 2) {
+    drawOrch(0, 30, 1, 1, S.hovMainO, true);
+    if (S.sibO_a > 0.008)
+      drawOrch(SIB_O.x, SIB_O.y, 1, S.sibO_a, S.hovSibO, false);
+  }
+
+  // ── Containers ────────────────────────────
+  if (S.level <= 1) {
+    drawContainer(0, 0, 1, 1, S.hovMainC, true);
+    if (S.sibC_a > 0.008)
+      drawContainer(SIB_C.x, SIB_C.y, 1, S.sibC_a, S.hovSibC, false);
+  }
+
+  ctx.restore();
+}
+
+function loop() { tick(); render(); requestAnimationFrame(loop); }
+
+// ── Boot ────────────────────────────────────────────────────────
+updateUI();
+S.cam.x=VIEWS[0].x; S.cam.y=VIEWS[0].y; S.cam.z=VIEWS[0].z;
+S.tgt.x=VIEWS[0].x; S.tgt.y=VIEWS[0].y; S.tgt.z=VIEWS[0].z;
+loop();
+</script>
+</body>
+</html>
