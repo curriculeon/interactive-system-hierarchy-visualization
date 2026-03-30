@@ -275,15 +275,15 @@ function drawContainer(cx, cy, sc, a, hl, isMainPyramid) {
 /* ── Orchestration — with hover-highlight dotted outline ─────── */
 function drawOrch(cx, cy, sc, a, hl, isMain) {
   if (a < 0.005) return;
-  const w = 620*sc, h = 540*sc, r = 30*sc;
+  const w = 420*sc, h = 370*sc, r = 22*sc;
 
   const csc = sc*0.36;
   const cpos = [
-    {x:cx-175*sc, y:cy-75*sc },
-    {x:cx+175*sc, y:cy-75*sc },
-    {x:cx-88*sc,  y:cy+105*sc},
-    {x:cx+88*sc,  y:cy+105*sc},
-    {x:cx,        y:cy-190*sc},
+    {x:cx-120*sc, y:cy-50*sc },
+    {x:cx+120*sc, y:cy-50*sc },
+    {x:cx-60*sc,  y:cy+72*sc },
+    {x:cx+60*sc,  y:cy+72*sc },
+    {x:cx,        y:cy-132*sc},
   ];
 
   ctx.save(); ctx.globalAlpha = a;
@@ -354,16 +354,16 @@ function drawOrch(cx, cy, sc, a, hl, isMain) {
 /* ── Cloud — with hover-highlight dotted outline ─────────────── */
 function drawCloud(cx, cy, sc, a) {
   if (a < 0.005) return;
-  const w = 1600*sc, h = 1050*sc, r = 55*sc;
+  const w = 960*sc, h = 680*sc, r = 40*sc;
   const hl = S.hovCloud;
 
   const osc = sc*0.30;
   const opos = [
-    {x:cx-500*sc, y:cy-210*sc},
-    {x:cx+500*sc, y:cy-210*sc},
-    {x:cx,        y:cy+280*sc},
-    {x:cx-320*sc, y:cy+80*sc },
-    {x:cx+320*sc, y:cy+80*sc },
+    {x:cx-300*sc, y:cy-140*sc},
+    {x:cx+300*sc, y:cy-140*sc},
+    {x:cx,        y:cy+180*sc},
+    {x:cx-195*sc, y:cy+50*sc },
+    {x:cx+195*sc, y:cy+50*sc },
   ];
 
   ctx.save(); ctx.globalAlpha = a;

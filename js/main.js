@@ -38,12 +38,12 @@ function render() {
 
   // ── Cloud ─────────────────────────────────
   if (S.level >= 3) {
-    drawCloud(0, 80, 1, 1);
+    drawCloud(0, 50, 1, 1);
   }
 
   // ── Orchestration ─────────────────────────
   if (S.level === 2) {
-    drawOrch(0, 30, 1, 1, S.hovMainO, true);
+    drawOrch(0, 15, 1, 1, S.hovMainO, true);
     if (S.sibO_a > 0.008)
       drawOrch(SIB_O.x, SIB_O.y, 1, S.sibO_a, S.hovSibO, false);
   }

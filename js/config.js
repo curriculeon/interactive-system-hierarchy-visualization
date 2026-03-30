@@ -28,20 +28,23 @@ const PYR = [
 
 /* Camera presets per hierarchy level */
 const VIEWS = [
-  { x:   0, y:   0, z: 1.8   },  // L0 – pyramid inside container (close)
-  { x: 115, y:   0, z: 1.0   },  // L1 – both containers visible
-  { x:   0, y:  20, z: 0.42  },  // L2 – orchestration cluster
-  { x:   0, y:  40, z: 0.13  },  // L3 – cloud
+  { x:   0, y:   0, z: 2.2   },  // L0 – pyramid inside container (close)
+  { x:  80, y:   0, z: 1.5   },  // L1 – both containers visible
+  { x:   0, y:  10, z: 1.1   },  // L2 – orchestration cluster (bigger for legibility)
+  { x:   0, y:  50, z: 0.9   },  // L3 – cloud (boosted so labels remain readable)
 ];
 
 /* Sibling positions (world-space) */
-const SIB_C = { x: 340, y: 12 };
-const SIB_O = { x: 720, y: 50 };
+// SIB_C: sibling container center should be separated from the main container
+// by at least the container width (310) + a comfortable gap to avoid overlap.
+// Main container is at x=0, so set SIB_C.x to 360 for a clear 50px gap.
+const SIB_C = { x: 360, y: 0 };
+const SIB_O = { x: 480, y: 30 };
 
 /* Half-extents for hit-testing boundaries */
 const C_HW  = 155,  C_HH  = 145;   // container
-const O_HW  = 310,  O_HH  = 270;   // orchestration
-const CL_HW = 800,  CL_HH = 525;   // cloud
+const O_HW  = 210,  O_HH  = 185;   // orchestration
+const CL_HW = 480,  CL_HH = 340;   // cloud
 
 /* Stars for parallax background */
 const STARS = Array.from({length: 280}, () => ({

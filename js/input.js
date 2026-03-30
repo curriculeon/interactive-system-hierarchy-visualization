@@ -67,11 +67,11 @@ canvas.addEventListener('mousemove', e => {
 
   // ── Level 2: Orchestration ─────────────────────
   if (S.level === 2) {
-    if (nearBorder(wm.x, wm.y, 0, 20, O_HW, O_HH, 100)) {
+    if (nearBorder(wm.x, wm.y, 0, 15, O_HW, O_HH, 60)) {
       S.sibO_t = 1;
       S.hovMainO = true;
-    } else if (inBox(wm.x, wm.y, 0, 20, O_HW+40, O_HH+40) &&
-               !inBox(wm.x, wm.y, 0, 20, O_HW-50, O_HH-50)) {
+    } else if (inBox(wm.x, wm.y, 0, 15, O_HW+25, O_HH+25) &&
+               !inBox(wm.x, wm.y, 0, 15, O_HW-30, O_HH-30)) {
       S.hovMainO = true;
     }
     if (S.sibO_a > 0.35 && inBox(wm.x, wm.y, SIB_O.x, SIB_O.y, O_HW, O_HH)) {
@@ -81,8 +81,8 @@ canvas.addEventListener('mousemove', e => {
 
   // ── Level 3: Cloud ─────────────────────────────
   if (S.level === 3) {
-    if (inBox(wm.x, wm.y, 0, 65, CL_HW+50, CL_HH+50) &&
-        !inBox(wm.x, wm.y, 0, 65, CL_HW-80, CL_HH-80)) {
+    if (inBox(wm.x, wm.y, 0, 75, CL_HW+30, CL_HH+30) &&
+        !inBox(wm.x, wm.y, 0, 75, CL_HW-50, CL_HH-50)) {
       S.hovCloud = true;
     }
   }
