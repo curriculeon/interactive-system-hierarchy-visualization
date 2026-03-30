@@ -1,0 +1,145 @@
+/* ═══════════════════════════════════════════════════════════════════
+   INTERACTIVE SYSTEMS HIERARCHY VISUALIZATION — Styles
+   ═══════════════════════════════════════════════════════════════════ */
+
+* { margin: 0; padding: 0; box-sizing: border-box; }
+
+body {
+  background: #0a0e1a;
+  overflow: hidden;
+  font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+  color: #e0e6f0;
+  user-select: none;
+}
+
+canvas { display: block; }
+
+/* ── Breadcrumb ─────────────────────────────────────────────────── */
+#breadcrumb {
+  position: fixed;
+  top: 20px;
+  left: 50%;
+  transform: translateX(-50%);
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 26px;
+  background: rgba(10, 14, 30, 0.88);
+  backdrop-filter: blur(14px);
+  border: 1px solid rgba(100, 140, 255, 0.15);
+  border-radius: 40px;
+  font-size: 13px;
+  letter-spacing: 0.4px;
+  z-index: 20;
+}
+.crumb {
+  color: rgba(150, 170, 210, 0.38);
+  cursor: pointer;
+  transition: color 0.3s, text-shadow 0.3s;
+  white-space: nowrap;
+  padding: 2px 4px;
+}
+.crumb:hover { color: #8ab4ff; }
+.crumb.active {
+  color: #b0d0ff;
+  font-weight: 600;
+  text-shadow: 0 0 14px rgba(120,170,255,0.25);
+}
+.crumb.visited { color: rgba(150, 170, 210, 0.65); }
+.crumb-sep { color: rgba(100, 140, 255, 0.22); font-size: 10px; }
+
+/* ── Hint box ───────────────────────────────────────────────────── */
+#hint-box {
+  position: fixed;
+  bottom: 34px;
+  left: 50%;
+  transform: translateX(-50%);
+  padding: 11px 30px;
+  background: rgba(10, 14, 30, 0.82);
+  backdrop-filter: blur(14px);
+  border: 1px solid rgba(100, 140, 255, 0.1);
+  border-radius: 30px;
+  font-size: 12.5px;
+  color: rgba(150, 185, 255, 0.6);
+  z-index: 20;
+  transition: opacity 0.6s, transform 0.6s;
+  text-align: center;
+  pointer-events: none;
+}
+#hint-box.hidden { opacity: 0; transform: translateX(-50%) translateY(8px); }
+
+/* ── Legend ──────────────────────────────────────────────────────── */
+#legend {
+  position: fixed;
+  bottom: 34px;
+  right: 28px;
+  padding: 14px 18px;
+  background: rgba(10, 14, 30, 0.82);
+  backdrop-filter: blur(14px);
+  border: 1px solid rgba(100, 140, 255, 0.08);
+  border-radius: 12px;
+  font-size: 10.5px;
+  z-index: 20;
+  line-height: 2;
+  color: rgba(180, 200, 230, 0.65);
+}
+.legend-dot {
+  display: inline-block;
+  width: 8px; height: 8px;
+  border-radius: 2px;
+  margin-right: 7px;
+  vertical-align: middle;
+}
+.legend-div {
+  height: 1px;
+  background: rgba(100,140,255,0.07);
+  margin: 4px 0;
+}
+
+/* ── Back button ────────────────────────────────────────────────── */
+#back-btn {
+  position: fixed;
+  top: 20px;
+  left: 22px;
+  padding: 7px 16px 7px 12px;
+  background: rgba(10, 14, 30, 0.88);
+  backdrop-filter: blur(14px);
+  border: 1px solid rgba(100, 140, 255, 0.18);
+  border-radius: 20px;
+  color: #7ba4ff;
+  font-size: 12.5px;
+  cursor: pointer;
+  z-index: 20;
+  transition: all 0.35s;
+  opacity: 0;
+  pointer-events: none;
+}
+#back-btn:hover {
+  background: rgba(30, 45, 90, 0.5);
+  border-color: rgba(100,140,255,0.35);
+}
+#back-btn.visible { opacity: 1; pointer-events: auto; }
+
+/* ── Title card ─────────────────────────────────────────────────── */
+#title-card {
+  position: fixed;
+  top: 72px;
+  left: 50%;
+  transform: translateX(-50%);
+  text-align: center;
+  z-index: 15;
+  pointer-events: none;
+  transition: opacity 1s;
+}
+#title-card h1 {
+  font-size: 15px;
+  font-weight: 600;
+  color: rgba(180, 210, 255, 0.7);
+  letter-spacing: 1.5px;
+  text-transform: uppercase;
+  margin-bottom: 4px;
+}
+#title-card p {
+  font-size: 11.5px;
+  color: rgba(140, 170, 220, 0.35);
+}
